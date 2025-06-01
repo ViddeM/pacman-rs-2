@@ -2,17 +2,15 @@ use bevy::{log, prelude::*};
 
 use crate::{
     common::Direction,
-    components::{Movable, Player, Position, QueableDirection},
+    components::{Movable, Player, QueableDirection},
     map::MAP,
 };
 
-const MIN_DIST_FOR_QUEUEING: f32 = 0.45;
-
 pub fn control_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&Movable, &mut QueableDirection, &Position), With<Player>>,
+    mut query: Query<(&Movable, &mut QueableDirection), With<Player>>,
 ) {
-    for (movable, mut queue_dir, position) in &mut query {
+    for (movable, mut queue_dir) in &mut query {
         let new_dir = if keyboard_input.just_pressed(KeyCode::KeyW)
             || keyboard_input.just_pressed(KeyCode::ArrowUp)
         {
@@ -33,18 +31,9 @@ pub fn control_player(
             continue;
         };
 
-        log::info!("Got new dir {new_dir:?}");
-
         if new_dir == movable.direction {
             log::info!("New dir is same as old dir, ignoring");
             continue;
-        }
-
-        let remaining_dist = position.dist_to(&(&movable.target_tile).into());
-        if remaining_dist > MIN_DIST_FOR_QUEUEING && movable.direction.opposite() != new_dir {
-            log::info!(
-                "Not close enough to target to switch dirs yet {remaining_dist} > {MIN_DIST_FOR_QUEUEING}"
-            );
         }
 
         // Check if the new dir will be legal.

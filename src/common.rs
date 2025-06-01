@@ -1,4 +1,4 @@
-use crate::map::{MAP_HEIGHT, MAP_WIDTH, TILE_SIZE};
+use crate::map::TILE_SIZE;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Direction {
@@ -29,12 +29,6 @@ pub struct TilePos {
 pub struct PixelPos {
     pub x: i32,
     pub y: i32,
-}
-
-impl PixelPos {
-    pub fn dist_to(&self, other: &PixelPos) -> f32 {
-        (((self.x - other.x).abs() + (self.y - other.y).abs()) as f32).sqrt()
-    }
 }
 
 impl From<TilePos> for PixelPos {
@@ -86,8 +80,8 @@ impl TilePos {
             Direction::Left => (-1, 0),
         };
 
-        let new_x = (self.x as i32 + translate_x).max(0).min(MAP_WIDTH as i32);
-        let new_y = (self.y as i32 + translate_y).max(0).min(MAP_HEIGHT as i32);
+        let new_x = self.x as i32 + translate_x;
+        let new_y = self.y as i32 + translate_y;
         Self { x: new_x, y: new_y }
     }
 

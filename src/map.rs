@@ -17,7 +17,7 @@ pub enum MapType {
 pub enum OpenContent {
     None,
     Food,
-    GhostEater,
+    Energizer,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -62,11 +62,35 @@ impl Map {
         TilePos { x: 15, y: 13 },
     ];
 
+    pub fn in_tunnel(&self, tile_pos: &TilePos) -> bool {
+        tile_pos.y == 14 && (tile_pos.x <= 5 || tile_pos.x >= 22)
+    }
+
+    pub fn get_tp_position(&self, tile_pos: &TilePos) -> Option<TilePos> {
+        match (tile_pos.x, tile_pos.y) {
+            (-1, 14) => Some(TilePos { x: 28, y: 14 }),
+            (28, 14) => Some(TilePos { x: -1, y: 14 }),
+            _ => None,
+        }
+    }
+
     /// Returns wether the tile at [pos] is a wall or not.
     /// If the position is outside of map tiles, returns true
     pub fn is_wall(&self, tile_pos: &TilePos) -> bool {
         let x = tile_pos.x as usize;
         let y = tile_pos.y as usize;
+
+        if self
+            .get_tp_position(&TilePos {
+                x: x as i32,
+                y: y as i32,
+            })
+            .is_some()
+        {
+            // TP Positions are walkable.
+            return false;
+        }
+
         if x >= MAP_WIDTH || y >= MAP_HEIGHT {
             return true;
         }
@@ -827,7 +851,7 @@ pub const MAP: Map = Map([
     // 23 (Second ghost eater fruit row)
     [
         MapType::Wall(WallType::DoubleStraight(Direction::Left)),
-        MapType::Open(OpenContent::GhostEater),
+        MapType::Open(OpenContent::Energizer),
         MapType::Open(OpenContent::Food),
         MapType::Open(OpenContent::Food),
         MapType::Wall(WallType::Straight(Direction::Right)),
@@ -852,7 +876,7 @@ pub const MAP: Map = Map([
         MapType::Wall(WallType::Straight(Direction::Left)),
         MapType::Open(OpenContent::Food),
         MapType::Open(OpenContent::Food),
-        MapType::Open(OpenContent::GhostEater),
+        MapType::Open(OpenContent::Energizer),
         MapType::Wall(WallType::DoubleStraight(Direction::Right)),
     ],
     // 24

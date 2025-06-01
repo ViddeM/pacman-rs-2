@@ -1,16 +1,20 @@
-use bevy::{log, prelude::*, window::PresentMode};
+use bevy::{prelude::*, window::PresentMode};
 use common::{Direction, PixelPos, TilePos};
 use components::{
     AnimationIndices, AnimationTimer, FULL_SPEED_PIXELS_PER_SECOND, Movable, Player, Position,
-    QueableDirection,
+    QueableDirection, ScoreText,
 };
-use map::{Corner, MAP, MapType, WallType};
+use map::{Corner, MAP, MapType, OpenContent, WallType};
 use player::control_player;
+use score::{Scorable, Score};
 
 pub mod common;
 pub mod components;
 pub mod map;
 pub mod player;
+pub mod score;
+
+const PAUSE_FRAME_TIME: f32 = 1. / 60.;
 
 fn main() {
     App::new()
@@ -28,7 +32,8 @@ fn main() {
                 }),
         ) // prevents blurry sprites
         .insert_resource(ClearColor(Color::BLACK))
-        .add_systems(Startup, setup_world)
+        .insert_resource(Score::new())
+        .add_systems(Startup, (setup_world, setup_ui))
         .add_systems(
             Update,
             (
@@ -37,6 +42,8 @@ fn main() {
                 move_character,
                 visually_move_character,
                 take_move_decision,
+                eat,
+                update_score_text,
             )
                 .chain(),
         )
@@ -62,6 +69,26 @@ fn setup_world(
     spawn_characters(&mut commands, &assert_server, &mut texture_atlas_layouts);
 
     spawn_map(&mut commands, &assert_server, &mut texture_atlas_layouts);
+}
+
+fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        Text::new("00"),
+        ScoreText,
+        TextFont {
+            font: asset_server.load("fonts/Joystix.ttf"),
+            font_size: 67.0,
+            ..default()
+        },
+        TextShadow::default(),
+        TextLayout::new_with_justify(JustifyText::Right),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(100.),
+            left: Val::Px(80.),
+            ..default()
+        },
+    ));
 }
 
 fn spawn_characters(
@@ -97,12 +124,7 @@ fn spawn_characters(
         pacman_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
         Position(start_pos.clone()),
-        Movable {
-            direction: Direction::Right,
-            progress: 1.,
-            speed: 0.8,
-            target_tile: first_target,
-        },
+        Movable::new(first_target, Direction::Right, 0.8),
         QueableDirection {
             next_direction: None,
         },
@@ -115,37 +137,108 @@ fn spawn_map(
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let texture = asset_server.load("sprites/pacman_spritesheet_2.png");
-    let layout =
-        TextureAtlasLayout::from_grid(UVec2::splat(8), 28, 31, None, Some(UVec2 { x: 228, y: 0 }));
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(8), 28, 31, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     // Spawn maze
     MAP.iter().enumerate().for_each(|(row_num, row)| {
         row.iter().enumerate().for_each(|(col_num, tile)| {
-            let sprite_index = match tile {
-                MapType::Wall(wall_type) => sprite_index_for_wall_type(wall_type),
-                MapType::GhostOnlyBarrier => 350,
-                MapType::Open(_open_content) => 44,
-            };
+            let x = col_num as i32;
+            let y = row_num as i32;
 
-            let tile_pos = TilePos {
-                x: col_num as i32,
-                y: row_num as i32,
+            match tile {
+                MapType::Wall(wall_type) => {
+                    spawn_wall(commands, x, y, wall_type, &texture, &texture_atlas_layout);
+                }
+                MapType::GhostOnlyBarrier => {
+                    spawn_ghost_only_barrier(commands, x, y, &texture, &texture_atlas_layout)
+                }
+                MapType::Open(open_type) => {
+                    spawn_open(commands, x, y, &open_type, &texture, &texture_atlas_layout);
+                }
             };
-            let pos: PixelPos = tile_pos.into();
-            commands.spawn((
-                Position(pos.clone()),
-                Sprite::from_atlas_image(
-                    texture.clone(),
-                    TextureAtlas {
-                        layout: texture_atlas_layout.clone(),
-                        index: sprite_index,
-                    },
-                ),
-                Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
-            ));
         })
     })
+}
+
+fn spawn_wall(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    wall_type: &WallType,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let sprite_index = sprite_index_for_wall_type(wall_type);
+
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: sprite_index,
+            },
+        ),
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
+}
+
+fn spawn_ghost_only_barrier(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: 350,
+            },
+        ),
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
+}
+
+fn spawn_open(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    open_content: &OpenContent,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let (scorable, sprite_index) = match open_content {
+        OpenContent::None => return,
+        OpenContent::Food => (Scorable::Dot, 29),
+        OpenContent::Energizer => (Scorable::Energizer, 85),
+    };
+
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: sprite_index,
+            },
+        ),
+        scorable,
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
 }
 
 fn animate_sprite(
@@ -202,12 +295,24 @@ pub fn sprite_index_for_wall_type(wall_type: &WallType) -> usize {
         WallType::NestCorner(Corner::TopLeft) => 465,
         WallType::NestEntranceLeftEdge => 348,
         WallType::NestEntranceRightEdge => 351,
-        WallType::Inner => 44,
+        WallType::Inner => 280,
     }
 }
 
 fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position)>) {
     for (mut movable, mut position) in query.iter_mut() {
+        if movable.pause_frames.is_some() {
+            movable.pause_time += time.delta_secs();
+        }
+
+        if movable.pause_frames.is_some() {
+            movable.pause_time += time.delta_secs();
+            if movable.pause_time >= PAUSE_FRAME_TIME {
+                movable.pause_time -= PAUSE_FRAME_TIME;
+                movable.reduce_pause_time();
+            }
+        }
+
         let tile_pos: TilePos = position.0.clone().into();
         let has_reached_destination =
             tile_pos == movable.target_tile && position.in_middle_of_tile();
@@ -226,6 +331,10 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
                     Direction::Left => position.x -= 1,
                 }
             }
+        } else if let Some(new_pos) = MAP.get_tp_position(&tile_pos) {
+            // Handle Teleport.
+            position.0 = (&new_pos).into();
+            movable.target_tile = new_pos;
         }
     }
 }
@@ -255,14 +364,34 @@ fn take_move_decision(query: Query<(&Position, &mut Movable, &mut QueableDirecti
         let new_target = tile_pos.translate(&movable.direction);
 
         if MAP.is_wall(&new_target) {
-            log::info!(
-                "New target is a wall, not moving... {} {}",
-                new_target.x,
-                new_target.y
-            );
             continue;
         }
 
         movable.target_tile = new_target;
     }
+}
+
+fn eat(
+    mut commands: Commands,
+    mut score: ResMut<Score>,
+    pacman: Single<(&Position, &mut Movable), With<Player>>,
+    food_query: Query<(&Position, &Scorable, Entity)>,
+) {
+    let (pacman_position, mut movable) = pacman.into_inner();
+
+    if !pacman_position.in_middle_of_tile() {
+        return;
+    }
+
+    for (position, scorable, entity) in food_query {
+        if position == pacman_position {
+            score.gain_score(scorable);
+            movable.pause(scorable);
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+fn update_score_text(score: Res<Score>, mut score_text: Single<&mut Text, With<ScoreText>>) {
+    score_text.0 = format!("{:02}", score.score);
 }
