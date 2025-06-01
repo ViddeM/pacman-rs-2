@@ -1,4 +1,4 @@
-use bevy::ecs::{component::Component, resource::Resource};
+use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct Score {

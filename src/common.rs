@@ -1,6 +1,6 @@
 use crate::map::TILE_SIZE;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Debug)]
 pub enum Direction {
     Up,
     Right,

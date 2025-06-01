@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::common::{Direction, TilePos};
+use crate::{
+    common::{Direction, PixelPos, TilePos},
+    components::Position,
+    score::Scorable,
+};
 
 pub const MAP_WIDTH: usize = 28;
 pub const MAP_HEIGHT: usize = 31;
@@ -61,6 +65,10 @@ impl Map {
         TilePos { x: 16, y: 13 },
         TilePos { x: 15, y: 13 },
     ];
+
+    pub fn is_in_ghost_up_block_area(&self, tile_pos: &TilePos) -> bool {
+        tile_pos.x >= 11 && tile_pos.x <= 16 && (tile_pos.y == 11 || tile_pos.y == 17)
+    }
 
     pub fn in_tunnel(&self, tile_pos: &TilePos) -> bool {
         tile_pos.y == 14 && (tile_pos.x <= 5 || tile_pos.x >= 22)
@@ -131,6 +139,154 @@ impl Map {
             .filter(|(p, _)| !MAP.is_wall(p))
             .filter(|(p, _)| !Map::FORBIDDEN_TILES.contains(p))
             .collect()
+    }
+}
+
+pub fn spawn_map(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let texture = asset_server.load("sprites/pacman_spritesheet_2.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(8), 28, 31, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
+    // Spawn maze
+    MAP.iter().enumerate().for_each(|(row_num, row)| {
+        row.iter().enumerate().for_each(|(col_num, tile)| {
+            let x = col_num as i32;
+            let y = row_num as i32;
+
+            match tile {
+                MapType::Wall(wall_type) => {
+                    spawn_wall(commands, x, y, wall_type, &texture, &texture_atlas_layout);
+                }
+                MapType::GhostOnlyBarrier => {
+                    spawn_ghost_only_barrier(commands, x, y, &texture, &texture_atlas_layout)
+                }
+                MapType::Open(open_type) => {
+                    spawn_open(commands, x, y, &open_type, &texture, &texture_atlas_layout);
+                }
+            };
+        })
+    })
+}
+
+fn spawn_wall(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    wall_type: &WallType,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let sprite_index = sprite_index_for_wall_type(wall_type);
+
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: sprite_index,
+            },
+        ),
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
+}
+
+fn spawn_ghost_only_barrier(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: 350,
+            },
+        ),
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
+}
+
+fn spawn_open(
+    commands: &mut Commands,
+    x: i32,
+    y: i32,
+    open_content: &OpenContent,
+    texture: &Handle<Image>,
+    texture_atlas_layout: &Handle<TextureAtlasLayout>,
+) {
+    let (scorable, sprite_index) = match open_content {
+        OpenContent::None => return,
+        OpenContent::Food => (Scorable::Dot, 29),
+        OpenContent::Energizer => (Scorable::Energizer, 85),
+    };
+
+    let tile_pos = TilePos { x, y };
+    let pos: PixelPos = tile_pos.into();
+
+    commands.spawn((
+        Position(pos.clone()),
+        Sprite::from_atlas_image(
+            texture.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout.clone(),
+                index: sprite_index,
+            },
+        ),
+        scorable,
+        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+    ));
+}
+
+pub fn sprite_index_for_wall_type(wall_type: &WallType) -> usize {
+    match wall_type {
+        WallType::Straight(Direction::Up) => 115,
+        WallType::Straight(Direction::Right) => 41,
+        WallType::Straight(Direction::Down) => 59,
+        WallType::Straight(Direction::Left) => 42,
+        WallType::DoubleStraight(Direction::Up) => 1,
+        WallType::DoubleStraight(Direction::Right) => 55,
+        WallType::DoubleStraight(Direction::Down) => 253,
+        WallType::DoubleStraight(Direction::Left) => 28,
+        WallType::DoubleCorner(Corner::TopRight) => 27,
+        WallType::DoubleCorner(Corner::BottomRight) => 279,
+        WallType::DoubleCorner(Corner::BottomLeft) => 252,
+        WallType::DoubleCorner(Corner::TopLeft) => 0,
+        WallType::VerticalLineInnerCorner(Corner::TopRight) => 727,
+        WallType::VerticalLineInnerCorner(Corner::BottomRight) => 699,
+        WallType::VerticalLineInnerCorner(Corner::BottomLeft) => 672,
+        WallType::VerticalLineInnerCorner(Corner::TopLeft) => 700,
+        WallType::HorizontalLineInnerCornerTopRight => 13,
+        WallType::HorizontalLineInnerCornerTopLeft => 14,
+        WallType::OuterCorner(Corner::TopRight) => 125,
+        WallType::OuterCorner(Corner::BottomRight) => 58,
+        WallType::OuterCorner(Corner::BottomLeft) => 61,
+        WallType::OuterCorner(Corner::TopLeft) => 126,
+        WallType::InnerCorner(Corner::TopRight) => 209,
+        WallType::InnerCorner(Corner::BottomRight) => 271,
+        WallType::InnerCorner(Corner::BottomLeft) => 260,
+        WallType::InnerCorner(Corner::TopLeft) => 210,
+        WallType::NestCorner(Corner::TopRight) => 458,
+        WallType::NestCorner(Corner::BottomRight) => 346,
+        WallType::NestCorner(Corner::BottomLeft) => 353,
+        WallType::NestCorner(Corner::TopLeft) => 465,
+        WallType::NestEntranceLeftEdge => 348,
+        WallType::NestEntranceRightEdge => 351,
+        WallType::Inner => 280,
     }
 }
 
