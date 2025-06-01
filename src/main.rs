@@ -1,7 +1,8 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{log, prelude::*, window::PresentMode};
 use common::{Direction, PixelPos, TilePos};
 use components::{
     AnimationIndices, AnimationTimer, FULL_SPEED_PIXELS_PER_SECOND, Movable, Player, Position,
+    QueableDirection,
 };
 use map::{Corner, MAP, MapType, WallType};
 use player::control_player;
@@ -35,6 +36,7 @@ fn main() {
                 control_player,
                 move_character,
                 visually_move_character,
+                take_move_decision,
             )
                 .chain(),
         )
@@ -100,6 +102,9 @@ fn spawn_characters(
             progress: 1.,
             speed: 0.8,
             target_tile: first_target,
+        },
+        QueableDirection {
+            next_direction: None,
         },
     ));
 }
@@ -229,5 +234,35 @@ fn visually_move_character(query: Query<(&Position, &mut Transform), With<Movabl
     for (position, mut transform) in query {
         transform.translation.x = position.x as f32;
         transform.translation.y = -position.y as f32;
+    }
+}
+
+fn take_move_decision(query: Query<(&Position, &mut Movable, &mut QueableDirection)>) {
+    for (position, mut movable, mut queued_dir) in query {
+        let tile_pos: TilePos = position.0.clone().into();
+        let has_reached_destination =
+            tile_pos == movable.target_tile && position.in_middle_of_tile();
+
+        if !has_reached_destination {
+            continue;
+        }
+
+        // We've reached our destination
+        if let Some(queued_dir) = queued_dir.next_direction.take() {
+            movable.direction = queued_dir;
+        }
+
+        let new_target = tile_pos.translate(&movable.direction);
+
+        if MAP.is_wall(&new_target) {
+            log::info!(
+                "New target is a wall, not moving... {} {}",
+                new_target.x,
+                new_target.y
+            );
+            continue;
+        }
+
+        movable.target_tile = new_target;
     }
 }

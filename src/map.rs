@@ -71,10 +71,10 @@ impl Map {
             return true;
         }
 
-        if let MapType::Wall(_) = self.0[y][x] {
-            true
-        } else {
-            false
+        match self.0[y][x] {
+            MapType::Wall(_) => true,
+            MapType::Open(_) => false,
+            MapType::GhostOnlyBarrier => true, // TODO: Handle ghosts,
         }
     }
 

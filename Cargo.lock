@@ -2731,13 +2731,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "my-first-bevy-game"
-version = "0.1.0"
-dependencies = [
- "bevy",
-]
-
-[[package]]
 name = "naga"
 version = "24.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3234,6 +3227,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22ec719bbf3b2a81c109a4e20b1f129b5566b7dce654bc3872f6a05abf82b2c4"
 dependencies = [
  "ttf-parser 0.25.1",
+]
+
+[[package]]
+name = "pacman-rs-2"
+version = "0.1.0"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

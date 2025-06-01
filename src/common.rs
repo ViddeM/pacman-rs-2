@@ -31,8 +31,20 @@ pub struct PixelPos {
     pub y: i32,
 }
 
+impl PixelPos {
+    pub fn dist_to(&self, other: &PixelPos) -> f32 {
+        (((self.x - other.x).abs() + (self.y - other.y).abs()) as f32).sqrt()
+    }
+}
+
 impl From<TilePos> for PixelPos {
     fn from(value: TilePos) -> Self {
+        (&value).into()
+    }
+}
+
+impl From<&TilePos> for PixelPos {
+    fn from(value: &TilePos) -> Self {
         PixelPos {
             x: value.x * TILE_SIZE,
             y: value.y * TILE_SIZE,
@@ -42,6 +54,12 @@ impl From<TilePos> for PixelPos {
 
 impl From<PixelPos> for TilePos {
     fn from(value: PixelPos) -> Self {
+        (&value).into()
+    }
+}
+
+impl From<&PixelPos> for TilePos {
+    fn from(value: &PixelPos) -> Self {
         let x = value.x;
         let y = value.y;
         let tile_x = (x - (x % TILE_SIZE)) / TILE_SIZE;

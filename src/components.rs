@@ -7,6 +7,11 @@ pub const FULL_SPEED_PIXELS_PER_SECOND: f32 = 75.75757625;
 #[derive(Component)]
 pub struct Player;
 
+#[derive(Component)]
+pub struct QueableDirection {
+    pub next_direction: Option<Direction>,
+}
+
 #[derive(Component, Deref, DerefMut, PartialEq, Debug, Clone)]
 pub struct Position(pub PixelPos);
 
