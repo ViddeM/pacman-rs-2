@@ -78,7 +78,7 @@ pub fn blinky_take_move_decision(
 
     log::info!("Blinky sorted options: {neighbours:?}");
 
-    if neighbours.is_empty() && MAP.get_tp_position(&tile_pos).is_some() {
+    if neighbours.is_empty() && MAP.get_tp_positions().contains(&tile_pos) {
         // We do nothing and let the other system handle teleportation.
         return;
     }

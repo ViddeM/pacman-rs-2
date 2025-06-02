@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{log, prelude::*, window::PresentMode};
 use common::{Direction, PixelPos, TilePos};
 use components::{
     AnimationIndices, AnimationTimer, FULL_SPEED_PIXELS_PER_SECOND, Movable, Position,
@@ -114,14 +114,11 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
     for (mut movable, mut position) in query.iter_mut() {
         if movable.pause_frames.is_some() {
             movable.pause_time += time.delta_secs();
-        }
-
-        if movable.pause_frames.is_some() {
-            movable.pause_time += time.delta_secs();
             if movable.pause_time >= PAUSE_FRAME_TIME {
                 movable.pause_time -= PAUSE_FRAME_TIME;
                 movable.reduce_pause_time();
             }
+            continue;
         }
 
         let tile_pos: TilePos = position.0.clone().into();
@@ -141,11 +138,44 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
                     Direction::Down => position.y += 1,
                     Direction::Left => position.x -= 1,
                 }
+
+                let has_reached_destination =
+                    tile_pos == movable.target_tile && position.in_middle_of_tile();
+                if has_reached_destination {
+                    log::info!(
+                        "Character reached destination {:?} with direction {:?}",
+                        movable.target_tile,
+                        movable.direction
+                    );
+                    match movable.direction {
+                        Direction::Right => {
+                            if tile_pos == MAP.right_tp_position() {
+                                let left_tp_pos = MAP.left_tp_position();
+                                position.0 = (&left_tp_pos).into();
+                                movable.target_tile = left_tp_pos.translate(&movable.direction);
+
+                                log::info!(
+                                    "Character teleporting from {tile_pos:?} {:?} to {left_tp_pos:?}",
+                                    movable.direction
+                                );
+                            }
+                        }
+                        Direction::Left => {
+                            if tile_pos == MAP.left_tp_position() {
+                                let right_tp_pos = MAP.right_tp_position();
+                                position.0 = (&right_tp_pos).into();
+                                movable.target_tile = right_tp_pos.translate(&movable.direction);
+
+                                log::info!(
+                                    "Character teleporting from {tile_pos:?} {:?} to {right_tp_pos:?}",
+                                    movable.direction
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
-        } else if let Some(new_pos) = MAP.get_tp_position(&tile_pos) {
-            // Handle Teleport.
-            position.0 = (&new_pos).into();
-            movable.target_tile = new_pos;
         }
     }
 }

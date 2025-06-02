@@ -70,6 +70,18 @@ impl Map {
         TilePos { x: 15, y: 13 },
     ];
 
+    pub fn left_tp_position(&self) -> TilePos {
+        TilePos { x: -1, y: 14 }
+    }
+
+    pub fn right_tp_position(&self) -> TilePos {
+        TilePos { x: 28, y: 14 }
+    }
+
+    pub fn get_tp_positions(&self) -> [TilePos; 2] {
+        [self.left_tp_position(), self.right_tp_position()]
+    }
+
     pub fn is_in_ghost_up_block_area(&self, tile_pos: &TilePos) -> bool {
         tile_pos.x >= 11 && tile_pos.x <= 16 && (tile_pos.y == 11 || tile_pos.y == 17)
     }
@@ -78,27 +90,13 @@ impl Map {
         tile_pos.y == 14 && (tile_pos.x <= 5 || tile_pos.x >= 22)
     }
 
-    pub fn get_tp_position(&self, tile_pos: &TilePos) -> Option<TilePos> {
-        match (tile_pos.x, tile_pos.y) {
-            (-1, 14) => Some(TilePos { x: 28, y: 14 }),
-            (28, 14) => Some(TilePos { x: -1, y: 14 }),
-            _ => None,
-        }
-    }
-
     /// Returns wether the tile at [pos] is a wall or not.
     /// If the position is outside of map tiles, returns true
     pub fn is_wall(&self, tile_pos: &TilePos) -> bool {
         let x = tile_pos.x as usize;
         let y = tile_pos.y as usize;
 
-        if self
-            .get_tp_position(&TilePos {
-                x: x as i32,
-                y: y as i32,
-            })
-            .is_some()
-        {
+        if self.get_tp_positions().contains(tile_pos) {
             // TP Positions are walkable.
             return false;
         }

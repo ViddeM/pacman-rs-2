@@ -85,8 +85,8 @@ impl From<&PixelPos> for TilePos {
 
 impl PixelPos {
     pub fn in_middle_of_tile(&self) -> bool {
-        self.x % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_X
-            && self.y % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_Y
+        self.x.abs() % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_X
+            && self.y.abs() % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_Y
     }
 }
 
