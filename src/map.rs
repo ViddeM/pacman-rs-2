@@ -1,14 +1,18 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
-    components::Position,
+    common::{Direction, TilePos},
+    components::{GhostDoor, Position, Wall},
     score::Scorable,
 };
 
 pub const MAP_WIDTH: usize = 28;
 pub const MAP_HEIGHT: usize = 31;
 pub const TILE_SIZE: i32 = 8;
+pub const HALF_TILE_SIZE: i32 = TILE_SIZE / 2;
+
+pub const TILE_CENTER_PIXEL_OFFSET_X: i32 = HALF_TILE_SIZE;
+pub const TILE_CENTER_PIXEL_OFFSET_Y: i32 = HALF_TILE_SIZE;
 
 #[derive(Component, Clone, Debug, PartialEq)]
 pub enum MapType {
@@ -183,18 +187,22 @@ fn spawn_wall(
     let sprite_index = sprite_index_for_wall_type(wall_type);
 
     let tile_pos = TilePos { x, y };
-    let pos: PixelPos = tile_pos.into();
+    let visual_pos = tile_pos.to_maze_display_pos();
+
+    let mut sprite = Sprite::from_atlas_image(
+        texture.clone(),
+        TextureAtlas {
+            layout: texture_atlas_layout.clone(),
+            index: sprite_index,
+        },
+    );
+    sprite.anchor = Anchor::TopLeft;
 
     commands.spawn((
-        Position(pos.clone()),
-        Sprite::from_atlas_image(
-            texture.clone(),
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: sprite_index,
-            },
-        ),
-        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+        Position(tile_pos.into()),
+        sprite,
+        Wall,
+        Transform::from_translation(visual_pos),
     ));
 }
 
@@ -206,18 +214,23 @@ fn spawn_ghost_only_barrier(
     texture_atlas_layout: &Handle<TextureAtlasLayout>,
 ) {
     let tile_pos = TilePos { x, y };
-    let pos: PixelPos = tile_pos.into();
+    let visual_pos = tile_pos.to_maze_display_pos();
+
+    let mut sprite = Sprite::from_atlas_image(
+        texture.clone(),
+        TextureAtlas {
+            layout: texture_atlas_layout.clone(),
+            index: 350,
+        },
+    );
+    sprite.anchor = Anchor::TopLeft;
 
     commands.spawn((
-        Position(pos.clone()),
-        Sprite::from_atlas_image(
-            texture.clone(),
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: 350,
-            },
-        ),
-        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+        Position(tile_pos.into()),
+        sprite,
+        Wall,
+        GhostDoor,
+        Transform::from_translation(visual_pos),
     ));
 }
 
@@ -236,19 +249,23 @@ fn spawn_open(
     };
 
     let tile_pos = TilePos { x, y };
-    let pos: PixelPos = tile_pos.into();
+    let visual_pos = tile_pos.to_maze_display_pos();
+
+    let mut sprite = Sprite::from_atlas_image(
+        texture.clone(),
+        TextureAtlas {
+            layout: texture_atlas_layout.clone(),
+            index: sprite_index,
+        },
+    );
+
+    sprite.anchor = Anchor::TopLeft;
 
     commands.spawn((
-        Position(pos.clone()),
-        Sprite::from_atlas_image(
-            texture.clone(),
-            TextureAtlas {
-                layout: texture_atlas_layout.clone(),
-                index: sprite_index,
-            },
-        ),
+        Position(tile_pos.into()),
+        sprite,
         scorable,
-        Transform::from_translation(Vec3::new(pos.x as f32, -pos.y as f32, -1.0)),
+        Transform::from_translation(visual_pos),
     ));
 }
 

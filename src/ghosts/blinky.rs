@@ -1,4 +1,4 @@
-use bevy::{log, prelude::*};
+use bevy::{log, prelude::*, sprite::Anchor};
 
 use crate::{
     common::{Direction, PixelPos, TilePos},
@@ -19,18 +19,23 @@ pub fn blinky_bundle(
     let mut start_pos: PixelPos = TilePos { x: 13, y: 11 }.into();
     start_pos.x += TILE_SIZE / 2;
 
+    let visual_start_pos = start_pos.to_character_display_pos();
+
     let first_target = TilePos { x: 13, y: 11 };
 
+    let mut sprite = Sprite::from_atlas_image(
+        texture,
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: pacman_indices.next(&Direction::Right),
+        },
+    );
+    sprite.anchor = Anchor::TopLeft;
+
     (
-        Sprite::from_atlas_image(
-            texture,
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: pacman_indices.next(&Direction::Right),
-            },
-        ),
+        sprite,
         Blinky,
-        Transform::from_translation(Vec3::new(start_pos.x as f32, -start_pos.y as f32, 0.)),
+        Transform::from_translation(visual_start_pos),
         pacman_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
         Position(start_pos.clone()),

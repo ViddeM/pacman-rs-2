@@ -131,7 +131,7 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
         if !has_reached_destination {
             movable.progress += time.delta_secs();
 
-            let time_per_pixel = (1. / FULL_SPEED_PIXELS_PER_SECOND) * movable.speed;
+            let time_per_pixel = 1. / (FULL_SPEED_PIXELS_PER_SECOND * movable.speed);
 
             if movable.progress >= time_per_pixel {
                 movable.progress -= time_per_pixel;
@@ -152,7 +152,8 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
 
 fn visually_move_character(query: Query<(&Position, &mut Transform), With<Movable>>) {
     for (position, mut transform) in query {
-        transform.translation.x = position.x as f32;
-        transform.translation.y = -position.y as f32;
+        let visual_pos = position.to_character_display_pos();
+        transform.translation.x = visual_pos.x as f32;
+        transform.translation.y = visual_pos.y as f32;
     }
 }

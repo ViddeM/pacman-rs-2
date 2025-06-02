@@ -14,6 +14,12 @@ pub struct Player;
 pub struct Position(pub PixelPos);
 
 #[derive(Component)]
+pub struct Wall;
+
+#[derive(Component)]
+pub struct GhostDoor;
+
+#[derive(Component)]
 pub struct QueableDirection {
     pub next_direction: Option<Direction>,
 }

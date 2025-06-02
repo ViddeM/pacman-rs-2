@@ -1,4 +1,5 @@
-use crate::map::TILE_SIZE;
+use crate::map::{TILE_CENTER_PIXEL_OFFSET_X, TILE_CENTER_PIXEL_OFFSET_Y, TILE_SIZE};
+use bevy::prelude::*;
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Debug)]
 pub enum Direction {
@@ -25,10 +26,27 @@ pub struct TilePos {
     pub y: i32,
 }
 
+impl TilePos {
+    pub fn to_maze_display_pos(&self) -> Vec3 {
+        let pixel_pos: PixelPos = self.into();
+        Vec3::new(pixel_pos.x as f32, -pixel_pos.y as f32, -1.)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct PixelPos {
     pub x: i32,
     pub y: i32,
+}
+
+impl PixelPos {
+    pub fn to_character_display_pos(&self) -> Vec3 {
+        Vec3::new(
+            (self.x - TILE_SIZE + TILE_CENTER_PIXEL_OFFSET_X) as f32,
+            -(self.y - TILE_SIZE + TILE_CENTER_PIXEL_OFFSET_Y) as f32,
+            0.,
+        )
+    }
 }
 
 impl From<TilePos> for PixelPos {
@@ -40,8 +58,8 @@ impl From<TilePos> for PixelPos {
 impl From<&TilePos> for PixelPos {
     fn from(value: &TilePos) -> Self {
         PixelPos {
-            x: value.x * TILE_SIZE,
-            y: value.y * TILE_SIZE,
+            x: value.x * TILE_SIZE + TILE_CENTER_PIXEL_OFFSET_X,
+            y: value.y * TILE_SIZE + TILE_CENTER_PIXEL_OFFSET_Y,
         }
     }
 }
@@ -67,7 +85,8 @@ impl From<&PixelPos> for TilePos {
 
 impl PixelPos {
     pub fn in_middle_of_tile(&self) -> bool {
-        self.x % TILE_SIZE == 0 && self.y % TILE_SIZE == 0
+        self.x % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_X
+            && self.y % TILE_SIZE == TILE_CENTER_PIXEL_OFFSET_Y
     }
 }
 
