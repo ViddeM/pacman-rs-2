@@ -20,11 +20,6 @@ pub struct Wall;
 pub struct GhostDoor;
 
 #[derive(Component)]
-pub struct QueableDirection {
-    pub next_direction: Option<Direction>,
-}
-
-#[derive(Component)]
 pub struct ScoreText;
 
 #[derive(Component)]

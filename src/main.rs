@@ -87,7 +87,7 @@ fn spawn_characters(
 
     commands.spawn(pacman_bundle(texture.clone(), texture_atlas_layout.clone()));
 
-    commands.spawn(blinky_bundle(texture, texture_atlas_layout));
+    // commands.spawn(blinky_bundle(texture, texture_atlas_layout));
 }
 
 fn animate_sprite(
@@ -131,6 +131,9 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
             let time_per_pixel = 1. / (FULL_SPEED_PIXELS_PER_SECOND * movable.speed);
 
             if movable.progress >= time_per_pixel {
+                let target_pixel_pos: PixelPos = (&movable.target_tile).into();
+                handle_side_movement(&movable.direction, &mut position.0, &target_pixel_pos);
+
                 movable.progress -= time_per_pixel;
                 match movable.direction {
                     Direction::Up => position.y -= 1,
@@ -175,6 +178,34 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
                         _ => {}
                     }
                 }
+            }
+        }
+    }
+}
+
+fn handle_side_movement(
+    direction: &Direction,
+    current_pixel_pos: &mut PixelPos,
+    target_pixel_pos: &PixelPos,
+) {
+    log::info!("Current: {current_pixel_pos:?} Target: {target_pixel_pos:?}");
+    match direction {
+        Direction::Up | Direction::Down => {
+            if (current_pixel_pos.x - target_pixel_pos.x) < 0 {
+                log::info!("Moving rightwards to compensate");
+                current_pixel_pos.x += 1;
+            } else {
+                log::info!("Moving leftwards to compensate");
+                current_pixel_pos.x -= 1;
+            }
+        }
+        Direction::Left | Direction::Right => {
+            if (current_pixel_pos.y - target_pixel_pos.y) < 0 {
+                log::info!("Moving downwards to compensate");
+                current_pixel_pos.y += 1;
+            } else {
+                log::info!("Moving upwards to compensate");
+                current_pixel_pos.y -= 1;
             }
         }
     }
