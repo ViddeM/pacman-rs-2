@@ -1,7 +1,9 @@
+use std::cmp::Ordering;
+
 use crate::map::{TILE_CENTER_PIXEL_OFFSET_X, TILE_CENTER_PIXEL_OFFSET_Y, TILE_SIZE};
 use bevy::prelude::*;
 
-#[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Direction {
     Up,
     Right,
@@ -17,6 +19,27 @@ impl Direction {
             Direction::Down => Direction::Up,
             Direction::Left => Direction::Right,
         }
+    }
+
+    fn value(&self) -> u8 {
+        match self {
+            Direction::Up => 0,
+            Direction::Left => 1,
+            Direction::Down => 2,
+            Direction::Right => 3,
+        }
+    }
+}
+
+impl PartialOrd for Direction {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Direction {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.value().cmp(&other.value())
     }
 }
 

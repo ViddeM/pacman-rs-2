@@ -83,7 +83,7 @@ impl Map {
     }
 
     pub fn is_in_ghost_up_block_area(&self, tile_pos: &TilePos) -> bool {
-        tile_pos.x >= 11 && tile_pos.x <= 16 && (tile_pos.y == 11 || tile_pos.y == 17)
+        tile_pos.x >= 11 && tile_pos.x <= 16 && (tile_pos.y == 11 || tile_pos.y == 23)
     }
 
     pub fn in_tunnel(&self, tile_pos: &TilePos) -> bool {
