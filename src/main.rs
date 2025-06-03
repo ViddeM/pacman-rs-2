@@ -3,11 +3,13 @@ use common::{Direction, PixelPos, TilePos};
 use components::{
     AnimationIndices, AnimationTimer, FULL_SPEED_PIXELS_PER_SECOND, Movable, Position,
 };
-use ghosts::blinky::{blinky_bundle, blinky_take_move_decision};
+use ghosts::blinky::{blinky_bundle, blinky_update_target};
 use map::{MAP, spawn_map};
 use player::{control_player, eat, pacman_bundle, player_take_move_decision};
 use score::Score;
 use ui::{setup_ui, update_score_text};
+
+use crate::ghosts::{GhostName, ghost_debug_bundle, ghost_movement, update_ghost_debug};
 
 pub mod common;
 pub mod components;
@@ -37,6 +39,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
         .add_systems(Startup, (setup_world, setup_ui))
+        .add_systems(FixedUpdate, blinky_update_target)
         .add_systems(
             Update,
             (
@@ -45,9 +48,10 @@ fn main() {
                 move_character,
                 visually_move_character,
                 player_take_move_decision,
-                blinky_take_move_decision,
+                ghost_movement,
                 eat,
                 update_score_text,
+                update_ghost_debug,
             )
                 .chain(),
         )
@@ -88,6 +92,10 @@ fn spawn_characters(
     commands.spawn(pacman_bundle(texture.clone(), texture_atlas_layout.clone()));
 
     commands.spawn(blinky_bundle(texture, texture_atlas_layout));
+    commands.spawn(ghost_debug_bundle(
+        GhostName::Blinky,
+        Color::linear_rgb(1.0, 0., 0.),
+    ));
 }
 
 fn animate_sprite(

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     common::{Direction, PixelPos, TilePos},
+    ghosts::GhostName,
     score::Scorable,
 };
 
@@ -20,8 +21,23 @@ pub struct Wall;
 pub struct GhostDoor;
 
 #[derive(Component)]
+pub struct Ghost {
+    pub ghost: GhostName,
+}
+
+#[derive(Component)]
+pub struct GhostDebug {
+    pub ghost: GhostName,
+}
+
+#[derive(Component)]
 pub struct QueableDirection {
     pub next_direction: Option<Direction>,
+}
+
+#[derive(Component)]
+pub struct GhostTarget {
+    pub tile: Option<TilePos>,
 }
 
 #[derive(Component)]
@@ -95,7 +111,8 @@ impl AnimationIndices {
             Direction::Down => &self.sprite_indices_down,
             Direction::Left => &self.sprite_indices_left,
         };
-        self.current_index = (self.current_index + 1) % (curr_indices.len() - 1);
+
+        self.current_index = (self.current_index + 1) % curr_indices.len();
 
         curr_indices[self.current_index]
     }
