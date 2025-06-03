@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub mod blinky;
+pub mod pinky;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GhostName {
@@ -29,27 +30,28 @@ impl GhostName {
     }
 }
 
-pub fn ghost_movement(ghost: Single<(&Position, &mut Movable, &GhostTarget)>) {
-    let (position, mut movable, target) = ghost.into_inner();
+pub fn ghost_movement(ghosts: Query<(&Position, &mut Movable, &GhostTarget)>) {
+    for (position, mut movable, target) in ghosts {
+        let Some(target) = target.tile.as_ref() else {
+            return;
+        };
 
-    let Some(target) = target.tile.as_ref() else {
-        return;
-    };
+        let tile_pos: TilePos = (&position.0).into();
 
-    let tile_pos: TilePos = (&position.0).into();
+        let has_reached_destination =
+            tile_pos == movable.target_tile && position.in_middle_of_tile();
 
-    let has_reached_destination = tile_pos == movable.target_tile && position.in_middle_of_tile();
+        if !has_reached_destination {
+            return;
+        }
 
-    if !has_reached_destination {
-        return;
+        let Some((new_dest, new_dir)) = next_tile(&tile_pos, &movable.direction, target) else {
+            return;
+        };
+
+        movable.target_tile = new_dest;
+        movable.direction = new_dir;
     }
-
-    let Some((new_dest, new_dir)) = next_tile(&tile_pos, &movable.direction, target) else {
-        return;
-    };
-
-    movable.target_tile = new_dest;
-    movable.direction = new_dir;
 }
 
 fn next_tile(

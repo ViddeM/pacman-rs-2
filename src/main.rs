@@ -10,7 +10,9 @@ use score::Score;
 use ui::{setup_ui, update_score_text};
 
 use crate::ghosts::{
-    GhostName, ghost_debug_bundle, ghost_movement, plot_ghost_path, update_ghost_debug,
+    GhostName, ghost_debug_bundle, ghost_movement,
+    pinky::{pinky_bundle, pinky_update_target},
+    plot_ghost_path, update_ghost_debug,
 };
 
 pub mod common;
@@ -41,7 +43,10 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
         .add_systems(Startup, (setup_world, setup_ui))
-        .add_systems(FixedUpdate, (blinky_update_target, plot_ghost_path).chain())
+        .add_systems(
+            FixedUpdate,
+            (blinky_update_target, pinky_update_target, plot_ghost_path).chain(),
+        )
         .add_systems(
             Update,
             (
@@ -100,8 +105,11 @@ fn spawn_characters(
 
     commands.spawn(pacman_bundle(texture.clone(), texture_atlas_layout.clone()));
 
-    commands.spawn(blinky_bundle(texture, texture_atlas_layout));
+    commands.spawn(blinky_bundle(texture.clone(), texture_atlas_layout.clone()));
     commands.spawn(ghost_debug_bundle(GhostName::Blinky));
+
+    commands.spawn(pinky_bundle(texture.clone(), texture_atlas_layout.clone()));
+    commands.spawn(ghost_debug_bundle(GhostName::Pinky));
 }
 
 fn animate_sprite(
