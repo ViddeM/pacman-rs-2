@@ -54,6 +54,14 @@ impl TilePos {
         let pixel_pos: PixelPos = self.into();
         Vec3::new(pixel_pos.x as f32, -pixel_pos.y as f32, -1.)
     }
+
+    pub fn to_center_display_pos(&self) -> Vec2 {
+        let pixel_pos: PixelPos = self.into();
+        Vec2::new(
+            (pixel_pos.x + TILE_SIZE / 2) as f32,
+            -(pixel_pos.y + TILE_SIZE / 2) as f32,
+        )
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

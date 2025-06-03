@@ -9,7 +9,9 @@ use player::{control_player, eat, pacman_bundle, player_take_move_decision};
 use score::Score;
 use ui::{setup_ui, update_score_text};
 
-use crate::ghosts::{GhostName, ghost_debug_bundle, ghost_movement, update_ghost_debug};
+use crate::ghosts::{
+    GhostName, ghost_debug_bundle, ghost_movement, plot_ghost_path, update_ghost_debug,
+};
 
 pub mod common;
 pub mod components;
@@ -39,7 +41,7 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
         .add_systems(Startup, (setup_world, setup_ui))
-        .add_systems(FixedUpdate, blinky_update_target)
+        .add_systems(FixedUpdate, (blinky_update_target, plot_ghost_path).chain())
         .add_systems(
             Update,
             (
@@ -60,9 +62,16 @@ fn main() {
 
 fn setup_world(
     mut commands: Commands,
+    mut config_store: ResMut<GizmoConfigStore>,
     assert_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
+    config_store
+        .config_mut::<DefaultGizmoConfigGroup>()
+        .0
+        .line
+        .width = 3.0;
+
     let camera_pos: PixelPos = TilePos { x: 14, y: 15 }.into();
 
     commands.spawn((
@@ -92,10 +101,7 @@ fn spawn_characters(
     commands.spawn(pacman_bundle(texture.clone(), texture_atlas_layout.clone()));
 
     commands.spawn(blinky_bundle(texture, texture_atlas_layout));
-    commands.spawn(ghost_debug_bundle(
-        GhostName::Blinky,
-        Color::linear_rgb(1.0, 0., 0.),
-    ));
+    commands.spawn(ghost_debug_bundle(GhostName::Blinky));
 }
 
 fn animate_sprite(
