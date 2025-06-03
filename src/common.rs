@@ -1,4 +1,7 @@
-use std::cmp::Ordering;
+use std::{
+    cmp::Ordering,
+    ops::{Add, Sub},
+};
 
 use crate::map::{TILE_CENTER_PIXEL_OFFSET_X, TILE_CENTER_PIXEL_OFFSET_Y, TILE_SIZE};
 use bevy::prelude::*;
@@ -47,6 +50,30 @@ impl Ord for Direction {
 pub struct TilePos {
     pub x: i32,
     pub y: i32,
+}
+
+impl Sub<TilePos> for TilePos {
+    type Output = Self;
+
+    #[inline]
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl Add<TilePos> for TilePos {
+    type Output = Self;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
 }
 
 impl TilePos {

@@ -11,6 +11,7 @@ use ui::{setup_ui, update_score_text};
 
 use crate::ghosts::{
     GhostName, ghost_debug_bundle, ghost_movement,
+    inky::{inky_bundle, inky_debug, inky_update_target},
     pinky::{pinky_bundle, pinky_update_target},
     plot_ghost_path, update_ghost_debug,
 };
@@ -45,7 +46,14 @@ fn main() {
         .add_systems(Startup, (setup_world, setup_ui))
         .add_systems(
             FixedUpdate,
-            (blinky_update_target, pinky_update_target, plot_ghost_path).chain(),
+            (
+                blinky_update_target,
+                pinky_update_target,
+                inky_update_target,
+                plot_ghost_path,
+                inky_debug,
+            )
+                .chain(),
         )
         .add_systems(
             Update,
@@ -110,6 +118,9 @@ fn spawn_characters(
 
     commands.spawn(pinky_bundle(texture.clone(), texture_atlas_layout.clone()));
     commands.spawn(ghost_debug_bundle(GhostName::Pinky));
+
+    commands.spawn(inky_bundle(texture.clone(), texture_atlas_layout.clone()));
+    commands.spawn(ghost_debug_bundle(GhostName::Inky));
 }
 
 fn animate_sprite(
