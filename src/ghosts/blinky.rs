@@ -39,6 +39,7 @@ pub fn blinky_bundle(
         GhostTarget { tile: None },
         Ghost {
             ghost: GhostName::Blinky,
+            corner_tile: TilePos { x: 25, y: -3 },
         },
         Transform::from_translation(visual_start_pos),
         blinky_indices,

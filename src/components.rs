@@ -23,6 +23,7 @@ pub struct GhostDoor;
 #[derive(Component)]
 pub struct Ghost {
     pub ghost: GhostName,
+    pub corner_tile: TilePos,
 }
 
 #[derive(Component)]

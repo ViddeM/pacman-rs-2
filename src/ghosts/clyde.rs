@@ -8,7 +8,9 @@ use crate::{
 };
 
 #[derive(Component)]
-pub struct Clyde;
+pub struct Clyde {
+    pacman_chase_radius: f32,
+}
 
 pub fn clyde_bundle(
     texture: Handle<Image>,
@@ -36,10 +38,13 @@ pub fn clyde_bundle(
 
     (
         sprite,
-        Clyde,
+        Clyde {
+            pacman_chase_radius: 8.,
+        },
         GhostTarget { tile: None },
         Ghost {
             ghost: GhostName::Clyde,
+            corner_tile: TilePos { x: 0, y: 31 },
         },
         Transform::from_translation(visual_start_pos),
         clyde_indices,
@@ -50,14 +55,19 @@ pub fn clyde_bundle(
 }
 
 pub fn clyde_update_target(
-    clyde: Single<&mut GhostTarget, With<Clyde>>,
+    clyde: Single<(&Position, &mut GhostTarget, &Clyde, &Ghost)>,
     pacman_pos: Single<&Position, With<Player>>,
 ) {
     let pacman_position: TilePos = (&pacman_pos.0).into();
 
-    let mut ghost_target = clyde.into_inner();
+    let (clyde_position, mut target, clyde, ghost) = clyde.into_inner();
+    let clyde_tile: TilePos = (&clyde_position.0).into();
 
-    // TODO: Really implement clyde targetting.
+    let dist = clyde_tile.dist_to(&pacman_position);
 
-    ghost_target.tile = Some(pacman_position);
+    if dist < clyde.pacman_chase_radius {
+        target.tile = Some(ghost.corner_tile.clone())
+    } else {
+        target.tile = Some(pacman_position);
+    }
 }

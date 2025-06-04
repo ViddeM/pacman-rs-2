@@ -44,6 +44,7 @@ pub fn inky_bundle(
         GhostTarget { tile: None },
         Ghost {
             ghost: GhostName::Inky,
+            corner_tile: TilePos { x: 27, y: 31 },
         },
         Transform::from_translation(visual_start_pos),
         inky_indices,

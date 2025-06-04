@@ -40,6 +40,7 @@ pub fn pinky_bundle(
         GhostTarget { tile: None },
         Ghost {
             ghost: GhostName::Pinky,
+            corner_tile: TilePos { x: 2, y: -3 },
         },
         Transform::from_translation(visual_start_pos),
         pinky_indices,
