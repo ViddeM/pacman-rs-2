@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub mod blinky;
+pub mod clyde;
 pub mod inky;
 pub mod pinky;
 

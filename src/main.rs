@@ -10,7 +10,9 @@ use score::Score;
 use ui::{setup_ui, update_score_text};
 
 use crate::ghosts::{
-    GhostName, ghost_debug_bundle, ghost_movement,
+    GhostName,
+    clyde::{clyde_bundle, clyde_update_target},
+    ghost_debug_bundle, ghost_movement,
     inky::{inky_bundle, inky_debug, inky_update_target},
     pinky::{pinky_bundle, pinky_update_target},
     plot_ghost_path, update_ghost_debug,
@@ -44,20 +46,14 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
         .add_systems(Startup, (setup_world, setup_ui))
+        .add_systems(FixedUpdate, (plot_ghost_path, inky_debug).chain())
         .add_systems(
-            FixedUpdate,
+            Update,
             (
                 blinky_update_target,
                 pinky_update_target,
                 inky_update_target,
-                plot_ghost_path,
-                inky_debug,
-            )
-                .chain(),
-        )
-        .add_systems(
-            Update,
-            (
+                clyde_update_target,
                 animate_sprite,
                 control_player,
                 move_character,
@@ -121,6 +117,9 @@ fn spawn_characters(
 
     commands.spawn(inky_bundle(texture.clone(), texture_atlas_layout.clone()));
     commands.spawn(ghost_debug_bundle(GhostName::Inky));
+
+    commands.spawn(clyde_bundle(texture.clone(), texture_atlas_layout.clone()));
+    commands.spawn(ghost_debug_bundle(GhostName::Clyde));
 }
 
 fn animate_sprite(
