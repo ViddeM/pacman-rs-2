@@ -9,13 +9,17 @@ use player::{control_player, eat, pacman_bundle, player_take_move_decision};
 use score::Score;
 use ui::{setup_ui, update_score_text};
 
-use crate::ghosts::{
-    GhostName,
-    clyde::{clyde_bundle, clyde_update_target},
-    ghost_debug_bundle, ghost_movement,
-    inky::{inky_bundle, inky_debug, inky_update_target},
-    pinky::{pinky_bundle, pinky_update_target},
-    plot_ghost_path, update_ghost_debug,
+use crate::{
+    ghosts::{
+        GhostName,
+        clyde::{clyde_bundle, clyde_debug, clyde_update_target},
+        ghost_debug::{ghost_debug_bundle, plot_ghost_path, update_ghost_debug},
+        ghost_mode::{GhostModeRes, ghost_mode_update},
+        ghost_movement::{ghost_handle_scatter, ghost_movement},
+        inky::{inky_bundle, inky_debug, inky_update_target},
+        pinky::{pinky_bundle, pinky_update_target},
+    },
+    ui::update_debug_text,
 };
 
 pub mod common;
@@ -45,23 +49,35 @@ fn main() {
         ) // prevents blurry sprites
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
+        .insert_resource(GhostModeRes::default())
         .add_systems(Startup, (setup_world, setup_ui))
-        .add_systems(FixedUpdate, (plot_ghost_path, inky_debug).chain())
         .add_systems(
-            Update,
+            FixedUpdate,
             (
+                plot_ghost_path,
+                inky_debug,
+                clyde_debug,
                 blinky_update_target,
                 pinky_update_target,
                 inky_update_target,
                 clyde_update_target,
+            )
+                .chain(),
+        )
+        .add_systems(
+            Update,
+            (
                 animate_sprite,
                 control_player,
                 move_character,
                 visually_move_character,
                 player_take_move_decision,
                 ghost_movement,
+                ghost_mode_update,
+                ghost_handle_scatter,
                 eat,
                 update_score_text,
+                update_debug_text,
                 update_ghost_debug,
             )
                 .chain(),

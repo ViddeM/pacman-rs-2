@@ -3,7 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
-    ghosts::GhostName,
+    ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
 
@@ -37,11 +37,8 @@ pub fn pinky_bundle(
     (
         sprite,
         Pinky,
-        GhostTarget { tile: None },
-        Ghost {
-            ghost: GhostName::Pinky,
-            corner_tile: TilePos { x: 2, y: -3 },
-        },
+        GhostTarget::default(),
+        Ghost::new(GhostName::Pinky, TilePos { x: 2, y: -3 }),
         Transform::from_translation(visual_start_pos),
         pinky_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
@@ -51,10 +48,16 @@ pub fn pinky_bundle(
 }
 
 pub fn pinky_update_target(
-    pinky: Single<&mut GhostTarget, With<Pinky>>,
+    pinky: Single<(&mut GhostTarget, &Ghost), With<Pinky>>,
     pacman_pos: Single<(&Position, &Movable), With<Player>>,
 ) {
     let (pos, movable) = pacman_pos.into_inner();
+
+    let (mut ghost_target, ghost) = pinky.into_inner();
+
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
 
     let pacman_pos: TilePos = (&pos.0).into();
 
@@ -76,8 +79,6 @@ pub fn pinky_update_target(
             y: pacman_pos.y,
         },
     };
-
-    let mut ghost_target = pinky.into_inner();
 
     ghost_target.tile = Some(pinky_target);
 }

@@ -3,7 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
-    ghosts::GhostName,
+    ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
 
@@ -41,11 +41,8 @@ pub fn clyde_bundle(
         Clyde {
             pacman_chase_radius: 8.,
         },
-        GhostTarget { tile: None },
-        Ghost {
-            ghost: GhostName::Clyde,
-            corner_tile: TilePos { x: 0, y: 31 },
-        },
+        GhostTarget::default(),
+        Ghost::new(GhostName::Clyde, TilePos { x: 0, y: 31 }),
         Transform::from_translation(visual_start_pos),
         clyde_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
@@ -61,6 +58,10 @@ pub fn clyde_update_target(
     let pacman_position: TilePos = (&pacman_pos.0).into();
 
     let (clyde_position, mut target, clyde, ghost) = clyde.into_inner();
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
+
     let clyde_tile: TilePos = (&clyde_position.0).into();
 
     let dist = clyde_tile.dist_to(&pacman_position);
@@ -70,4 +71,26 @@ pub fn clyde_update_target(
     } else {
         target.tile = Some(pacman_position);
     }
+}
+
+pub fn clyde_debug(
+    clyde: Single<(&Clyde, &Ghost)>,
+    pacman: Single<&Position, With<Player>>,
+    mut gizmos: Gizmos,
+) {
+    let (clyde, ghost) = clyde.into_inner();
+
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
+
+    let pacman_visual_pos = pacman.0.to_character_display_pos();
+
+    let color = GhostName::Clyde.get_color();
+
+    gizmos.circle_2d(
+        Isometry2d::from_translation(Vec2::new(pacman_visual_pos.x, pacman_visual_pos.y)),
+        clyde.pacman_chase_radius * (TILE_SIZE as f32),
+        color,
+    );
 }

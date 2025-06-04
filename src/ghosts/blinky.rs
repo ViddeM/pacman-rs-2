@@ -3,7 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
-    ghosts::GhostName,
+    ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
 
@@ -36,11 +36,8 @@ pub fn blinky_bundle(
     (
         sprite,
         Blinky,
-        GhostTarget { tile: None },
-        Ghost {
-            ghost: GhostName::Blinky,
-            corner_tile: TilePos { x: 25, y: -3 },
-        },
+        GhostTarget::default(),
+        Ghost::new(GhostName::Blinky, TilePos { x: 25, y: -3 }),
         Transform::from_translation(visual_start_pos),
         blinky_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
@@ -50,12 +47,15 @@ pub fn blinky_bundle(
 }
 
 pub fn blinky_update_target(
-    blinky: Single<&mut GhostTarget, With<Blinky>>,
+    blinky: Single<(&mut GhostTarget, &Ghost), With<Blinky>>,
     pacman_pos: Single<&Position, With<Player>>,
 ) {
     let pacman_position: TilePos = (&pacman_pos.0).into();
+    let (mut ghost_target, ghost) = blinky.into_inner();
 
-    let mut ghost_target = blinky.into_inner();
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
 
     ghost_target.tile = Some(pacman_position);
 }

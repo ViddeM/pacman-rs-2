@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     common::{Direction, PixelPos, TilePos},
-    ghosts::GhostName,
+    ghosts::{GhostName, ghost_mode::GhostMode},
     score::Scorable,
 };
 
@@ -23,7 +23,18 @@ pub struct GhostDoor;
 #[derive(Component)]
 pub struct Ghost {
     pub ghost: GhostName,
+    pub current_mode: GhostMode,
     pub corner_tile: TilePos,
+}
+
+impl Ghost {
+    pub fn new(ghost: GhostName, corner: TilePos) -> Self {
+        Self {
+            ghost,
+            current_mode: GhostMode::Chase,
+            corner_tile: corner,
+        }
+    }
 }
 
 #[derive(Component)]
@@ -39,10 +50,17 @@ pub struct QueableDirection {
 #[derive(Component)]
 pub struct GhostTarget {
     pub tile: Option<TilePos>,
+    pub should_reverse: bool,
 }
 
-#[derive(Component)]
-pub struct ScoreText;
+impl Default for GhostTarget {
+    fn default() -> Self {
+        Self {
+            tile: None,
+            should_reverse: false,
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct Movable {

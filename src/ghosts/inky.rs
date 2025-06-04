@@ -3,7 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
-    ghosts::{GhostName, blinky::Blinky},
+    ghosts::{GhostName, blinky::Blinky, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
 
@@ -41,11 +41,8 @@ pub fn inky_bundle(
         Inky {
             intermediate_tile: None,
         },
-        GhostTarget { tile: None },
-        Ghost {
-            ghost: GhostName::Inky,
-            corner_tile: TilePos { x: 27, y: 31 },
-        },
+        GhostTarget::default(),
+        Ghost::new(GhostName::Inky, TilePos { x: 27, y: 31 }),
         Transform::from_translation(visual_start_pos),
         inky_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
@@ -55,13 +52,18 @@ pub fn inky_bundle(
 }
 
 pub fn inky_update_target(
-    inky: Single<(&mut GhostTarget, &mut Inky)>,
+    inky: Single<(&mut GhostTarget, &mut Inky, &Ghost)>,
     blinky: Single<&Position, With<Blinky>>,
     pacman_pos: Single<(&Position, &Movable), With<Player>>,
 ) {
     let (pos, movable) = pacman_pos.into_inner();
-
     let pacman_pos: TilePos = (&pos.0).into();
+
+    let (mut ghost_target, mut inky, ghost) = inky.into_inner();
+
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
 
     let intermediate_pos: TilePos = match movable.direction {
         Direction::Up => TilePos {
@@ -87,18 +89,20 @@ pub fn inky_update_target(
 
     let inky_target = intermediate_pos.clone() + delta;
 
-    let (mut ghost_target, mut inky) = inky.into_inner();
-
     inky.intermediate_tile = Some(intermediate_pos);
     ghost_target.tile = Some(inky_target);
 }
 
 pub fn inky_debug(
-    inky: Single<(&Inky, &GhostTarget)>,
+    inky: Single<(&Inky, &GhostTarget, &Ghost)>,
     blinky: Single<&Position, With<Blinky>>,
     mut gizmos: Gizmos,
 ) {
-    let (inky, target) = inky.into_inner();
+    let (inky, target, ghost) = inky.into_inner();
+
+    if ghost.current_mode != GhostMode::Chase {
+        return;
+    }
 
     let Some(target) = target.tile.as_ref() else {
         return;
