@@ -1,9 +1,10 @@
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{log, prelude::*, sprite::Anchor};
 
 use crate::{
     common::{Direction, TilePos},
     components::{Ghost, GhostDebug, GhostTarget, Movable, Position},
-    ghosts::{GhostName, ghost_movement::next_tile},
+    debug::DebugRes,
+    ghosts::{GhostName, ghost_mode::GhostModeRes, ghost_movement::next_tile},
     map::TILE_SIZE,
 };
 
@@ -27,8 +28,14 @@ pub fn ghost_debug_bundle(ghost_name: GhostName) -> impl Bundle {
 pub fn update_ghost_debug(
     ghosts: Query<(&GhostTarget, &Ghost)>,
     ghost_debugs: Query<(&mut Transform, &GhostDebug)>,
+    debug_mode: Res<DebugRes>,
 ) {
     for (mut transform, debug) in ghost_debugs {
+        if !debug_mode.debug_mode {
+            transform.translation = Vec3::new(1000., 1000., 1.);
+            continue;
+        }
+
         for (target, ghost) in ghosts.iter() {
             if ghost.ghost != debug.ghost {
                 continue;
@@ -43,10 +50,15 @@ pub fn update_ghost_debug(
     }
 }
 
-pub fn plot_ghost_path(
+pub fn debug_plot_ghost_path(
     ghosts: Query<(&GhostTarget, &Position, &Movable, &Ghost)>,
     mut gizmos: Gizmos,
+    debug_mode: Res<DebugRes>,
 ) {
+    if !debug_mode.debug_mode {
+        return;
+    }
+
     for (ghost_target, position, movable, ghost) in ghosts {
         let Some(target) = ghost_target.tile.as_ref() else {
             continue;
@@ -96,4 +108,18 @@ fn estimate_ghost_path(
     }
 
     path
+}
+
+pub fn ghost_mode_debug_update(
+    mut mode: ResMut<GhostModeRes>,
+    debug_mode: Res<DebugRes>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if !debug_mode.debug_mode {
+        return;
+    }
+
+    if keyboard_input.just_pressed(KeyCode::KeyH) {
+        mode.global_mode = mode.global_mode.next();
+    }
 }

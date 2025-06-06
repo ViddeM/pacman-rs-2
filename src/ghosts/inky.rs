@@ -3,6 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
+    debug::DebugRes,
     ghosts::{GhostName, blinky::Blinky, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
@@ -96,8 +97,13 @@ pub fn inky_update_target(
 pub fn inky_debug(
     inky: Single<(&Inky, &GhostTarget, &Ghost)>,
     blinky: Single<&Position, With<Blinky>>,
+    debug_mode: Res<DebugRes>,
     mut gizmos: Gizmos,
 ) {
+    if !debug_mode.debug_mode {
+        return;
+    }
+
     let (inky, target, ghost) = inky.into_inner();
 
     if ghost.current_mode != GhostMode::Chase {

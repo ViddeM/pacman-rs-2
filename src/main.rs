@@ -10,11 +10,14 @@ use score::Score;
 use ui::{setup_ui, update_score_text};
 
 use crate::{
+    debug::{DebugRes, toggle_debug_mode},
     ghosts::{
         GhostName,
         clyde::{clyde_bundle, clyde_debug, clyde_update_target},
-        ghost_debug::{ghost_debug_bundle, plot_ghost_path, update_ghost_debug},
-        ghost_mode::{GhostModeRes, ghost_mode_update},
+        ghost_debug::{
+            debug_plot_ghost_path, ghost_debug_bundle, ghost_mode_debug_update, update_ghost_debug,
+        },
+        ghost_mode::GhostModeRes,
         ghost_movement::{ghost_handle_scatter, ghost_movement},
         inky::{inky_bundle, inky_debug, inky_update_target},
         pinky::{pinky_bundle, pinky_update_target},
@@ -24,6 +27,7 @@ use crate::{
 
 pub mod common;
 pub mod components;
+pub mod debug;
 pub mod ghosts;
 pub mod map;
 pub mod player;
@@ -50,11 +54,12 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Score::new())
         .insert_resource(GhostModeRes::default())
+        .insert_resource(DebugRes::default())
         .add_systems(Startup, (setup_world, setup_ui))
         .add_systems(
             FixedUpdate,
             (
-                plot_ghost_path,
+                debug_plot_ghost_path,
                 inky_debug,
                 clyde_debug,
                 blinky_update_target,
@@ -73,12 +78,13 @@ fn main() {
                 visually_move_character,
                 player_take_move_decision,
                 ghost_movement,
-                ghost_mode_update,
+                ghost_mode_debug_update,
                 ghost_handle_scatter,
                 eat,
                 update_score_text,
                 update_debug_text,
                 update_ghost_debug,
+                toggle_debug_mode,
             )
                 .chain(),
         )

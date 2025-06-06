@@ -37,7 +37,7 @@ pub fn blinky_bundle(
         sprite,
         Blinky,
         GhostTarget::default(),
-        Ghost::new(GhostName::Blinky, TilePos { x: 25, y: -3 }),
+        Ghost::new(GhostName::Blinky, TilePos { x: 25, y: -4 }),
         Transform::from_translation(visual_start_pos),
         blinky_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),

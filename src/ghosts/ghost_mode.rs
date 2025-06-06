@@ -27,12 +27,3 @@ impl Default for GhostModeRes {
         }
     }
 }
-
-pub fn ghost_mode_update(
-    mut mode: ResMut<GhostModeRes>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    if keyboard_input.just_pressed(KeyCode::KeyH) {
-        mode.global_mode = mode.global_mode.next();
-    }
-}

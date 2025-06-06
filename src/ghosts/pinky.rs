@@ -38,7 +38,7 @@ pub fn pinky_bundle(
         sprite,
         Pinky,
         GhostTarget::default(),
-        Ghost::new(GhostName::Pinky, TilePos { x: 2, y: -3 }),
+        Ghost::new(GhostName::Pinky, TilePos { x: 2, y: -4 }),
         Transform::from_translation(visual_start_pos),
         pinky_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),

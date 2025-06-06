@@ -3,6 +3,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use crate::{
     common::{Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
+    debug::DebugRes,
     ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
@@ -76,8 +77,13 @@ pub fn clyde_update_target(
 pub fn clyde_debug(
     clyde: Single<(&Clyde, &Ghost)>,
     pacman: Single<&Position, With<Player>>,
+    debug_mode: Res<DebugRes>,
     mut gizmos: Gizmos,
 ) {
+    if !debug_mode.debug_mode {
+        return;
+    }
+
     let (clyde, ghost) = clyde.into_inner();
 
     if ghost.current_mode != GhostMode::Chase {
