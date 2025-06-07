@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
+    common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
     debug::DebugRes,
     ghosts::{GhostName, blinky::Blinky, ghost_mode::GhostMode},
@@ -41,6 +41,9 @@ pub fn inky_bundle(
         sprite,
         Inky {
             intermediate_tile: None,
+        },
+        Character::Ghost {
+            name: GhostName::Inky,
         },
         GhostTarget::default(),
         Ghost::new(GhostName::Inky, TilePos { x: 27, y: 31 }),

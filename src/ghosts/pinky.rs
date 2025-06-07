@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
+    common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
     ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
@@ -37,6 +37,9 @@ pub fn pinky_bundle(
     (
         sprite,
         Pinky,
+        Character::Ghost {
+            name: GhostName::Pinky,
+        },
         GhostTarget::default(),
         Ghost::new(GhostName::Pinky, TilePos { x: 2, y: -4 }),
         Transform::from_translation(visual_start_pos),

@@ -53,14 +53,8 @@ pub fn update_score_text(score: Res<Score>, mut score_text: Single<&mut Text, Wi
 
 pub fn update_debug_text(
     ghost_mode: Res<GhostModeRes>,
-    debug_mode: Res<DebugRes>,
     mut debug_text: Single<&mut Text, With<DebugText>>,
 ) {
-    if !debug_mode.debug_mode {
-        debug_text.0 = "".into();
-        return;
-    }
-
     debug_text.0 = format!(
         "DEBUG :: {:?} (H to toggle)\nDisable debug mode (T)",
         ghost_mode.global_mode

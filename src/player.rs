@@ -1,7 +1,7 @@
 use bevy::{log, prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
+    common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Movable, Player, Position, QueableDirection},
     map::MAP,
     score::{Scorable, Score},
@@ -34,6 +34,7 @@ pub fn pacman_bundle(
 
     (
         sprite,
+        Character::Pacman,
         Player,
         Transform::from_translation(visual_start_pos),
         pacman_indices,

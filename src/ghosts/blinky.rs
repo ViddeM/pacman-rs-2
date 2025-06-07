@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
+    common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
     ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
@@ -36,6 +36,9 @@ pub fn blinky_bundle(
     (
         sprite,
         Blinky,
+        Character::Ghost {
+            name: GhostName::Blinky,
+        },
         GhostTarget::default(),
         Ghost::new(GhostName::Blinky, TilePos { x: 25, y: -4 }),
         Transform::from_translation(visual_start_pos),

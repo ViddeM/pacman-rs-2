@@ -1,9 +1,13 @@
 use std::{
     cmp::Ordering,
+    fmt::Display,
     ops::{Add, Sub},
 };
 
-use crate::map::{TILE_CENTER_PIXEL_OFFSET_X, TILE_CENTER_PIXEL_OFFSET_Y, TILE_SIZE};
+use crate::{
+    ghosts::GhostName,
+    map::{TILE_CENTER_PIXEL_OFFSET_X, TILE_CENTER_PIXEL_OFFSET_Y, TILE_SIZE},
+};
 use bevy::prelude::*;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -164,5 +168,24 @@ impl TilePos {
 
     pub fn dist_to(&self, other: &TilePos) -> f32 {
         ((self.x - other.x).abs() + (self.y - other.y).abs()) as f32 / 2.0
+    }
+}
+
+#[derive(Debug, Clone, Component)]
+pub enum Character {
+    Pacman,
+    Ghost { name: GhostName },
+}
+
+impl Display for Character {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Character::Pacman => "Pacman".to_string(),
+                Character::Ghost { name } => name.to_string(),
+            }
+        )
     }
 }

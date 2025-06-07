@@ -10,7 +10,8 @@ use score::Score;
 use ui::{setup_ui, update_score_text};
 
 use crate::{
-    debug::{DebugRes, toggle_debug_mode},
+    common::Character,
+    debug::{DebugRes, run_if_debug, toggle_debug_mode},
     ghosts::{
         GhostName,
         clyde::{clyde_bundle, clyde_debug, clyde_update_target},
@@ -59,9 +60,6 @@ fn main() {
         .add_systems(
             FixedUpdate,
             (
-                debug_plot_ghost_path,
-                inky_debug,
-                clyde_debug,
                 blinky_update_target,
                 pinky_update_target,
                 inky_update_target,
@@ -70,21 +68,31 @@ fn main() {
                 .chain(),
         )
         .add_systems(
+            FixedUpdate,
+            (debug_plot_ghost_path, inky_debug, clyde_debug).run_if(run_if_debug),
+        )
+        .add_systems(
             Update,
             (
+                update_debug_text,
+                update_ghost_debug,
+                ghost_mode_debug_update,
+            )
+                .run_if(run_if_debug),
+        )
+        .add_systems(
+            Update,
+            (
+                toggle_debug_mode,
                 animate_sprite,
                 control_player,
                 move_character,
                 visually_move_character,
                 player_take_move_decision,
                 ghost_movement,
-                ghost_mode_debug_update,
                 ghost_handle_scatter,
                 eat,
                 update_score_text,
-                update_debug_text,
-                update_ghost_debug,
-                toggle_debug_mode,
             )
                 .chain(),
         )
@@ -108,7 +116,7 @@ fn setup_world(
     commands.spawn((
         Camera2d,
         Projection::Orthographic(OrthographicProjection {
-            scale: 0.25,
+            scale: 0.4,
             ..OrthographicProjection::default_2d()
         }),
         Transform::from_translation(Vec3::new(camera_pos.x as f32, -camera_pos.y as f32, 0.)),
@@ -164,9 +172,13 @@ fn animate_sprite(
     }
 }
 
-fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position)>) {
-    for (mut movable, mut position) in query.iter_mut() {
+fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position, &Character)>) {
+    for (mut movable, mut position, character) in query.iter_mut() {
         if movable.pause_frames.is_some() {
+            log::info!(
+                "{character} is pausing this frame ({} frames remaining) ",
+                movable.pause_frames.unwrap_or_default()
+            );
             movable.pause_time += time.delta_secs();
             if movable.pause_time >= PAUSE_FRAME_TIME {
                 movable.pause_time -= PAUSE_FRAME_TIME;
@@ -176,7 +188,7 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
         }
 
         let tile_pos: TilePos = position.0.clone().into();
-        let has_reached_destination =
+        let mut has_reached_destination =
             tile_pos == movable.target_tile && position.in_middle_of_tile();
 
         if !has_reached_destination {
@@ -192,43 +204,45 @@ fn move_character(time: Res<Time>, mut query: Query<(&mut Movable, &mut Position
                     Direction::Down => position.y += 1,
                     Direction::Left => position.x -= 1,
                 }
+            }
 
-                let has_reached_destination =
-                    tile_pos == movable.target_tile && position.in_middle_of_tile();
-                if has_reached_destination {
-                    log::info!(
-                        "Character reached destination {:?} with direction {:?}",
-                        movable.target_tile,
-                        movable.direction
-                    );
-                    match movable.direction {
-                        Direction::Right => {
-                            if tile_pos == MAP.right_tp_position() {
-                                let left_tp_pos = MAP.left_tp_position();
-                                position.0 = (&left_tp_pos).into();
-                                movable.target_tile = left_tp_pos.translate(&movable.direction);
+            // Check if we have reached our destination.
+            has_reached_destination =
+                tile_pos == movable.target_tile && position.in_middle_of_tile();
+        }
 
-                                log::info!(
-                                    "Character teleporting from {tile_pos:?} {:?} to {left_tp_pos:?}",
-                                    movable.direction
-                                );
-                            }
-                        }
-                        Direction::Left => {
-                            if tile_pos == MAP.left_tp_position() {
-                                let right_tp_pos = MAP.right_tp_position();
-                                position.0 = (&right_tp_pos).into();
-                                movable.target_tile = right_tp_pos.translate(&movable.direction);
+        if has_reached_destination {
+            log::info!(
+                "{character} reached destination {:?} with direction {:?}",
+                movable.target_tile,
+                movable.direction
+            );
+            match movable.direction {
+                Direction::Right => {
+                    if tile_pos == MAP.right_tp_position() {
+                        let left_tp_pos = MAP.left_tp_position();
+                        position.0 = (&left_tp_pos).into();
+                        movable.target_tile = left_tp_pos.translate(&movable.direction);
 
-                                log::info!(
-                                    "Character teleporting from {tile_pos:?} {:?} to {right_tp_pos:?}",
-                                    movable.direction
-                                );
-                            }
-                        }
-                        _ => {}
+                        log::info!(
+                            "{character} teleporting from {tile_pos:?} {:?} to {left_tp_pos:?}",
+                            movable.direction
+                        );
                     }
                 }
+                Direction::Left => {
+                    if tile_pos == MAP.left_tp_position() {
+                        let right_tp_pos = MAP.right_tp_position();
+                        position.0 = (&right_tp_pos).into();
+                        movable.target_tile = right_tp_pos.translate(&movable.direction);
+
+                        log::info!(
+                            "{character} teleporting from {tile_pos:?} {:?} to {right_tp_pos:?}",
+                            movable.direction
+                        );
+                    }
+                }
+                _ => {}
             }
         }
     }

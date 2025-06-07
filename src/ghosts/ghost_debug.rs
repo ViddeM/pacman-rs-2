@@ -1,4 +1,4 @@
-use bevy::{log, prelude::*, sprite::Anchor};
+use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
     common::{Direction, TilePos},
@@ -21,7 +21,7 @@ pub fn ghost_debug_bundle(ghost_name: GhostName) -> impl Bundle {
     (
         GhostDebug { ghost: ghost_name },
         sprite,
-        Transform::from_translation(Vec3::new(0., 0., -10.)),
+        Transform::from_translation(Vec3::new(-1000., -1000., -10.)),
     )
 }
 

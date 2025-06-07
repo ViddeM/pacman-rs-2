@@ -1,7 +1,7 @@
 use bevy::{prelude::*, sprite::Anchor};
 
 use crate::{
-    common::{Direction, PixelPos, TilePos},
+    common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
     debug::DebugRes,
     ghosts::{GhostName, ghost_mode::GhostMode},
@@ -41,6 +41,9 @@ pub fn clyde_bundle(
         sprite,
         Clyde {
             pacman_chase_radius: 8.,
+        },
+        Character::Ghost {
+            name: GhostName::Clyde,
         },
         GhostTarget::default(),
         Ghost::new(GhostName::Clyde, TilePos { x: 0, y: 31 }),

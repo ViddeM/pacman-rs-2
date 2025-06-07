@@ -62,7 +62,7 @@ impl Default for GhostTarget {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct Movable {
     pub direction: Direction,
     /// Progress to the next pixel in the direction of travel.

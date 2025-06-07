@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bevy::prelude::*;
 
 pub mod blinky;
@@ -24,5 +26,11 @@ impl GhostName {
             GhostName::Pinky => Color::linear_rgb(0.8, 0., 0.8),
             GhostName::Clyde => Color::linear_rgb(0.8, 0.8, 0.),
         }
+    }
+}
+
+impl Display for GhostName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
