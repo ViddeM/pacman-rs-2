@@ -1,9 +1,10 @@
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{log, prelude::*, sprite::Anchor};
 
 use crate::{
     common::{Character, Direction, PixelPos, TilePos},
     components::{AnimationIndices, AnimationTimer, Ghost, GhostTarget, Movable, Player, Position},
     debug::DebugRes,
+    events::CharacterReachedTargetEvent,
     ghosts::{GhostName, ghost_mode::GhostMode},
     map::TILE_SIZE,
 };
@@ -37,6 +38,9 @@ pub fn clyde_bundle(
 
     sprite.anchor = Anchor::TopLeft;
 
+    // let speed = 0.75;
+    let speed = 0.1;
+
     (
         sprite,
         Clyde {
@@ -51,15 +55,18 @@ pub fn clyde_bundle(
         clyde_indices,
         AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
         Position(start_pos.clone()),
-        Movable::new(start_tile_pos, Direction::Left, 0.75),
+        Movable::new(start_tile_pos, Direction::Left, speed),
     )
 }
 
 pub fn clyde_update_target(
+    pacman: Single<&Position, With<Player>>,
     clyde: Single<(&Position, &mut GhostTarget, &Clyde, &Ghost)>,
-    pacman_pos: Single<&Position, With<Player>>,
+    mut pacman_events: EventReader<CharacterReachedTargetEvent>,
 ) {
-    let pacman_position: TilePos = (&pacman_pos.0).into();
+    if !pacman_events.read().any(|e| e.is_clyde() || e.is_pacman()) {
+        return;
+    }
 
     let (clyde_position, mut target, clyde, ghost) = clyde.into_inner();
     if ghost.current_mode != GhostMode::Chase {
@@ -67,13 +74,19 @@ pub fn clyde_update_target(
     }
 
     let clyde_tile: TilePos = (&clyde_position.0).into();
+    let pacman_tile: TilePos = (&pacman.into_inner().0).into();
 
-    let dist = clyde_tile.dist_to(&pacman_position);
+    let dist = clyde_tile.dist_to(&pacman_tile);
+
+    log::info!(
+        "Clyde taking decision :: dist: {dist} < {}?",
+        clyde.pacman_chase_radius
+    );
 
     if dist < clyde.pacman_chase_radius {
         target.tile = Some(ghost.corner_tile.clone())
     } else {
-        target.tile = Some(pacman_position);
+        target.tile = Some(pacman_tile.clone());
     }
 }
 
@@ -93,12 +106,12 @@ pub fn clyde_debug(
         return;
     }
 
-    let pacman_visual_pos = pacman.0.to_character_display_pos();
+    let pacman_tile_pos: TilePos = (&pacman.0).into();
 
     let color = GhostName::Clyde.get_color();
 
     gizmos.circle_2d(
-        Isometry2d::from_translation(Vec2::new(pacman_visual_pos.x, pacman_visual_pos.y)),
+        Isometry2d::from_translation(pacman_tile_pos.to_center_display_pos()),
         clyde.pacman_chase_radius * (TILE_SIZE as f32),
         color,
     );

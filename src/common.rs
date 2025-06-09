@@ -167,11 +167,11 @@ impl TilePos {
     }
 
     pub fn dist_to(&self, other: &TilePos) -> f32 {
-        ((self.x - other.x).abs() + (self.y - other.y).abs()) as f32 / 2.0
+        (((self.x - other.x).pow(2) + (self.y - other.y).pow(2)) as f32).sqrt()
     }
 }
 
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, PartialEq, Eq)]
 pub enum Character {
     Pacman,
     Ghost { name: GhostName },

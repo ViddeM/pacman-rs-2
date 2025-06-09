@@ -1,4 +1,4 @@
-use crate::{debug::DebugRes, ghosts::ghost_mode::GhostModeRes, score::Score};
+use crate::{ghosts::ghost_mode::GhostModeRes, score::Score};
 use bevy::prelude::*;
 
 #[derive(Component)]

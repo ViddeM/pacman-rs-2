@@ -6,8 +6,6 @@ use crate::{
     score::Scorable,
 };
 
-pub const FULL_SPEED_PIXELS_PER_SECOND: f32 = 75.75757625;
-
 #[derive(Component)]
 pub struct Player;
 
